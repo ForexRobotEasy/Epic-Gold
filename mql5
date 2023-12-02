@@ -1,0 +1,94 @@
+
+// Program: Epic Gold
+// Developer: Forex Robot Easy Team
+// Developer's Site: forexroboteasy.com
+
+// Include necessary libraries
+#include <Trade\Trade.mqh>
+#include <Trade\PositionInfo.mqh>
+
+// Define trading constants
+const double LOT_SIZE = 0.01; // Lot size for trading
+const int STOP_LEVEL = 30; // Stop level in points
+const int TRAILING_STOP_DISTANCE = 20; // Trailing stop distance in points
+const double PROFIT_TARGET = 100.0; // Profit target in points
+
+// Define trading functions
+void OpenBuyTrade(double price)
+{
+   // Calculate stop loss and take profit levels
+   double stopLoss = price - STOP_LEVEL * _Point;
+   double takeProfit = price + PROFIT_TARGET * _Point;
+
+   // Open a buy trade
+   Trade.Buy(LOT_SIZE, Symbol(), price, stopLoss, takeProfit);
+}
+
+void OpenSellTrade(double price)
+{
+   // Calculate stop loss and take profit levels
+   double stopLoss = price + STOP_LEVEL * _Point;
+   double takeProfit = price - PROFIT_TARGET * _Point;
+
+   // Open a sell trade
+   Trade.Sell(LOT_SIZE, Symbol(), price, stopLoss, takeProfit);
+}
+
+void ModifyStopLoss(double price)
+{
+   // Calculate new stop loss level
+   double stopLoss = price - TRAILING_STOP_DISTANCE * _Point;
+
+   // Modify the stop loss level of the open position
+   PositionInfo.Modify(PositionType(), stopLoss, PositionInfo.TakeProfit());
+}
+
+// Define the main entry point of the program
+void OnTick()
+{
+   // Check for optimal market conditions using a time filter
+   if (!TimeFilter())
+      return;
+
+   // Check if there is an open position
+   if (PositionSelect(Symbol()))
+   {
+      // Get the current position information
+      double currentPosition = PositionInfo.GetDouble(POSITION_PRICE_CURRENT);
+
+      // Check if the trade is in profit
+      if (PositionInfo.Profit() > 0)
+      {
+         // Adjust the stop loss level using trailing stop feature
+         ModifyStopLoss(currentPosition);
+      }
+   }
+   else
+   {
+      // Open a new trade based on the Epic Gold strategy
+      if (// Add your strategy conditions here)
+      {
+         // Open a buy trade
+         OpenBuyTrade(Bid);
+      }
+      else if (// Add your strategy conditions here)
+      {
+         // Open a sell trade
+         OpenSellTrade(Ask);
+      }
+   }
+}
+
+// Define the time filter function
+bool TimeFilter()
+{
+   // Get the current day of the week and hour
+   int dayOfWeek = TimeDayOfWeek(TimeCurrent());
+   int hour = TimeHour(TimeCurrent());
+
+   // Check if it is a weekday and within trading hours
+   if (dayOfWeek > TIME_SATURDAY && dayOfWeek < TIME_SUNDAY && hour >= 0 && hour <= 23)
+      return true;
+
+   return false;
+}
